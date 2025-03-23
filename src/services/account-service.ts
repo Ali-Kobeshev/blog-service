@@ -49,6 +49,11 @@ export class AccountService {
       const link = this.upsertActivationLink(email);
       await emailAdapter.sendActivationMail(email, link);
 
+      activateLinks[email] = link;
+      setTimeout(() => {
+         delete activateLinks[email];
+      }, 30000);
+
       return true;
    }
    static async activate(email: string, link: string) {
