@@ -9,7 +9,7 @@ import { accountProfileTransaction } from "../mongo-transactions/account-profile
 import { RoleNames } from "../constants/enums/role-names";
 import { SessionService } from "./session-service";
 
-const activateLinks: any = {};
+const activateLinkCodes: any = {};
 
 export class AccountService {
    static async registration(email: string, password: string) {
@@ -37,10 +37,10 @@ export class AccountService {
    static upsertActivationLink(email: string) {
       const linkUuid = uuidv4();
       const link = `${process.env.API_URL}/identity/activate/${email}/${linkUuid}`;
-      activateLinks[email] = linkUuid;
+      activateLinkCodes[email] = linkUuid;
       setTimeout(() => {
-         delete activateLinks[email];
-      }, 30000);
+         delete activateLinkCodes[email];
+      }, 120000);
 
       return link;
    }
@@ -49,33 +49,27 @@ export class AccountService {
       const link = this.upsertActivationLink(email);
       await emailAdapter.sendActivationMail(email, link);
 
-      activateLinks[email] = link;
-      setTimeout(() => {
-         delete activateLinks[email];
-      }, 30000);
-
       return true;
    }
-   static async activate(email: string, link: string) {
-      if (activateLinks[email] === link) {
-         const activatedAccount = await AccountModel.findOneAndUpdate(
-            { email },
-            {
-               isActivated: true,
-               "roles.unactivated-user": RoleNames.activatedUser,
-            },
-            { new: true }
-         );
-         if (!activatedAccount) {
+   static async activate(email: string, code: string) {
+      if (activateLinkCodes[email] === code) {
+         const account = await AccountModel.findOne({ email });
+
+         if (account) {
+            account.isActivated = true;
+            account.roles = account.roles.filter(
+               (role) => role !== RoleNames.unactivatedUser
+            );
+            account.roles.push(RoleNames.activatedUser);
+            await account.save();
+         } else {
             throw ApiError.NotFound("Некорректный адрес почты");
          }
-         const accountDto = { ...new AccountDto(activatedAccount) };
+
+         const accountDto = { ...new AccountDto(account) };
          const tokens = TokenService.generateTokens(accountDto);
 
-         await SessionService.createNewSession(
-            tokens.refreshToken,
-            activatedAccount
-         );
+         await SessionService.createNewSession(tokens.refreshToken, account);
 
          return { account: accountDto, ...tokens };
       } else {

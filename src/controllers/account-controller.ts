@@ -43,7 +43,7 @@ export class AccountController {
          validationResultHandler(req);
          const activatedAccount = await AccountService.activate(
             req.params.email,
-            req.params.link
+            req.params.code
          );
          res.cookie("refreshToken", activatedAccount.refreshToken, {
             httpOnly: true,

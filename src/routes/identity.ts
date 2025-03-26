@@ -17,15 +17,15 @@ router.post(
    AccountController.sendActivateLink
 );
 router.get(
-   "/activate/:email/:link",
-   param("link")
+   "/activate/:email/:code",
+   param("code")
       .escape()
       .isLength({ min: 36, max: 36 })
       .withMessage("Неккоректный код активации"),
    AccountController.activate
 );
 router.post("/login", loginDataValidator, AccountController.login);
-router.post("/logout", AccountController.logout);
 router.get("/refresh", AccountController.refresh);
+router.post("/logout", AccountController.logout);
 
 export default router;
