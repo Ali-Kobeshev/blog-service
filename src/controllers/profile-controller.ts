@@ -15,15 +15,13 @@ export class ProfileController {
    ) {
       try {
          const inputModel = req.body as ProfileInputType;
-         if (!inputModel._id) {
-            throw ApiError.BadRequest("нет профиля");
-         }
+         const decodedAccessToken = req.body.accountData as AccountOutputType;
+
          const file = req.file;
          const filePath = file
             ? path.join(__dirname, "../uploads", file.filename)
             : null;
 
-         const decodedAccessToken: AccountOutputType = req.body.accountData;
          const updatedProfile = await ProfileService.updatePresentation(
             inputModel,
             filePath,

@@ -23,7 +23,9 @@ export class SessionService {
    }
 
    static async prolongationSession(dbAccount: AccountDbType, refresh: string) {
-      const sessionDbList = await SessionsListModel.findById(dbAccount._id);
+      const sessionDbList = await SessionsListModel.findById(
+         dbAccount.sessionsListId
+      );
       if (sessionDbList) {
          const sessionList = sessionDbList.sessions;
          const clearedList = sessionList.filter((session) => {

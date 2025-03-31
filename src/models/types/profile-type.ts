@@ -17,6 +17,5 @@ export type ProfileDbType = {
 };
 
 export type ProfileInputType = {
-   _id: string;
    name: string;
 };

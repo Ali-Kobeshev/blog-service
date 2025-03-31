@@ -18,11 +18,19 @@ const upload = multer({ storage: storage });
 
 const router = Router();
 
+function uploadAndAuthMiddleware(req: any, res: any, next: any) {
+   authMiddleware(req, res, (err) => {
+      if (err) return next(err);
+      upload.single("file")(req, res, next);
+   });
+}
+
 router.get("/get/:id", ProfileController.getProfile);
 router.put(
    "/update/presentation",
-   upload.single("file"),
-   authMiddleware,
+   //upload.single("file"),
+   //authMiddleware,
+   uploadAndAuthMiddleware,
    ProfileController.updatePresentation
 );
 router.get("/get/subscription-list/:id");
