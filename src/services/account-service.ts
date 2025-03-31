@@ -13,137 +13,111 @@ const activateLinkCodes: any = {};
 
 export class AccountService {
    static async registration(email: string, password: string) {
-      try {
-         const candidate = await AccountModel.findOne({ email });
-         if (candidate) {
-            throw ApiError.BadRequest(
-               `Пользователь с адресом ${email} уже существует`
-            );
-         }
-         const hashPassword = await bcrypt.hash(password, 5);
-
-         const { createdAccount, createdProfile } =
-            await accountProfileTransaction(email, hashPassword);
-
-         const accountDto = { ...new AccountDto(createdAccount) };
-         const tokens = TokenService.generateTokens(accountDto);
-
-         await SessionService.createNewSession(
-            tokens.refreshToken,
-            createdAccount
+      const candidate = await AccountModel.findOne({ email });
+      if (candidate) {
+         throw ApiError.BadRequest(
+            `Пользователь с адресом ${email} уже существует`
          );
-
-         return { createdProfile, account: accountDto, ...tokens };
-      } catch (error) {
-         throw error;
       }
+      const hashPassword = await bcrypt.hash(password, 5);
+
+      const { createdAccount, createdProfile } =
+         await accountProfileTransaction(email, hashPassword);
+
+      const accountDto = { ...new AccountDto(createdAccount) };
+      const tokens = TokenService.generateTokens(accountDto);
+
+      await SessionService.createNewSession(
+         tokens.refreshToken,
+         createdAccount
+      );
+
+      return { createdProfile, account: accountDto, ...tokens };
    }
    static upsertActivationLink(email: string) {
-      try {
-         const linkUuid = uuidv4();
-         const link = `${process.env.API_URL}/identity/activate/${email}/${linkUuid}`;
-         activateLinkCodes[email] = linkUuid;
-         setTimeout(() => {
-            delete activateLinkCodes[email];
-         }, 120000);
+      const linkUuid = uuidv4();
+      const link = `${process.env.API_URL}/identity/activate/${email}/${linkUuid}`;
+      activateLinkCodes[email] = linkUuid;
+      setTimeout(() => {
+         delete activateLinkCodes[email];
+      }, 120000);
 
-         return link;
-      } catch (error) {
-         throw error;
-      }
+      return link;
    }
    static async sendActivationMail(email: string) {
-      try {
-         const emailAdapter = new EmailAdapter();
-         const link = this.upsertActivationLink(email);
-         await emailAdapter.sendActivationMail(email, link);
+      const emailAdapter = new EmailAdapter();
+      const link = this.upsertActivationLink(email);
+      await emailAdapter.sendActivationMail(email, link);
 
-         return true;
-      } catch (error) {
-         throw error;
-      }
+      return true;
    }
    static async activate(email: string, code: string) {
-      try {
-         if (activateLinkCodes[email] === code) {
-            const account = await AccountModel.findOne({ email });
-
-            if (account) {
-               account.isActivated = true;
-               account.roles = account.roles.filter(
-                  (role) => role !== RoleNames.unactivatedUser
-               );
-               account.roles.push(RoleNames.activatedUser);
-               await account.save();
-            } else {
-               throw ApiError.NotFound("Некорректный адрес почты");
-            }
-
-            const accountDto = { ...new AccountDto(account) };
-            const tokens = TokenService.generateTokens(accountDto);
-
-            await SessionService.createNewSession(tokens.refreshToken, account);
-
-            return { account: accountDto, ...tokens };
-         } else {
-            throw ApiError.NotFound("Ссылка не найдена");
-         }
-      } catch (error) {
-         throw error;
-      }
-   }
-   static async login(email: string, password: string) {
-      try {
+      if (activateLinkCodes[email] === code) {
          const account = await AccountModel.findOne({ email });
-         if (!account) {
-            throw ApiError.NotFound("Аккаунт с такой почтой не найден");
+
+         if (account) {
+            account.isActivated = true;
+            account.roles = account.roles.filter(
+               (role) => role !== RoleNames.unactivatedUser
+            );
+            account.roles.push(RoleNames.activatedUser);
+            await account.save();
+         } else {
+            throw ApiError.NotFound("Некорректный адрес почты");
          }
-         const hashPassword = account.hashPassword;
-         await bcrypt.compare(password, hashPassword).then((result) => {
-            if (!result) {
-               throw ApiError.BadRequest("Не верный пароль");
-            }
-         });
+
          const accountDto = { ...new AccountDto(account) };
          const tokens = TokenService.generateTokens(accountDto);
 
          await SessionService.createNewSession(tokens.refreshToken, account);
 
          return { account: accountDto, ...tokens };
-      } catch (error) {
-         throw error;
+      } else {
+         throw ApiError.NotFound("Ссылка не найдена");
       }
    }
-   static async logout(token: string) {
-      try {
-         const isValidated = TokenService.validateRefreshToken(token);
-         if (isValidated) {
-            return true;
-         } else {
-            throw ApiError.UnauthorizedError;
+   static async login(email: string, password: string) {
+      const account = await AccountModel.findOne({ email });
+      if (!account) {
+         throw ApiError.NotFound("Аккаунт с такой почтой не найден");
+      }
+      const hashPassword = account.hashPassword;
+      await bcrypt.compare(password, hashPassword).then((result) => {
+         if (!result) {
+            throw ApiError.BadRequest("Не верный пароль");
          }
-      } catch (error) {
-         throw error;
+      });
+      const accountDto = { ...new AccountDto(account) };
+      const tokens = TokenService.generateTokens(accountDto);
+
+      await SessionService.createNewSession(tokens.refreshToken, account);
+
+      return { account: accountDto, ...tokens };
+   }
+   static async logout(token: string) {
+      const isValidated = TokenService.validateRefreshToken(token);
+      if (isValidated) {
+         return true;
+      } else {
+         throw ApiError.UnauthorizedError;
       }
    }
    static async refresh(token: string) {
-      try {
-         if (TokenService.validateRefreshToken(token)) {
-            const decoded = TokenService.decodeToken(token);
-            const email = decoded.email;
-            const account = await AccountModel.findOne({ email });
-            if (account) {
-               const prolongationResult =
-                  await SessionService.prolongationSession(account, token);
-               return prolongationResult;
-            } else {
-               throw ApiError.NotFound("Аккаунт не найден");
-            }
+      if (TokenService.validateRefreshToken(token)) {
+         const decoded = TokenService.decodeToken(token);
+         const email = decoded.email;
+         const account = await AccountModel.findOne({ email });
+         if (account) {
+            const prolongationResult = await SessionService.prolongationSession(
+               account,
+               token
+            );
+            return prolongationResult;
          } else {
-            throw ApiError.UnauthorizedError();
+            throw ApiError.NotFound("Аккаунт не найден");
          }
-      } catch (error) {
-         throw error;
+      } else {
+         throw ApiError.UnauthorizedError();
       }
    }
 }
