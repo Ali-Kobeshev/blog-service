@@ -94,10 +94,9 @@ export class AccountService {
 
       return { account: accountDto, ...tokens };
    }
-   static async logout(email: string, token: string) {
+   static async logout(token: string) {
       const isValidated = TokenService.validateRefreshToken(token);
-      const decoded = TokenService.decodeToken(token);
-      if (decoded.email === email && isValidated) {
+      if (isValidated) {
          return true;
       } else {
          throw ApiError.UnauthorizedError;

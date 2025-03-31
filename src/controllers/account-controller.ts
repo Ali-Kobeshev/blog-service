@@ -1,11 +1,9 @@
 import { NextFunction, Request, Response } from "express";
 import { AccountService } from "../services/account-service";
-import { validationResultHandler } from "../validators/validation-result-handler";
 
 export class AccountController {
    static async registration(req: Request, res: Response, next: NextFunction) {
       try {
-         validationResultHandler(req);
          const { email, password } = req.body;
          const accountData = await AccountService.registration(email, password);
          res.cookie("refreshToken", accountData.refreshToken, {
@@ -30,7 +28,6 @@ export class AccountController {
       next: NextFunction
    ) {
       try {
-         validationResultHandler(req);
          const result = await AccountService.sendActivationMail(req.body.email);
          res.status(200).json(result);
       } catch (error) {
@@ -40,7 +37,6 @@ export class AccountController {
    }
    static async activate(req: Request, res: Response, next: NextFunction) {
       try {
-         validationResultHandler(req);
          const activatedAccount = await AccountService.activate(
             req.params.email,
             req.params.code
@@ -61,7 +57,6 @@ export class AccountController {
    }
    static async login(req: Request, res: Response, next: NextFunction) {
       try {
-         validationResultHandler(req);
          const accountData = await AccountService.login(
             req.body.email,
             req.body.password
@@ -82,9 +77,8 @@ export class AccountController {
    }
    static async logout(req: Request, res: Response, next: NextFunction) {
       try {
-         validationResultHandler(req);
          const { refreshToken } = req.cookies;
-         await AccountService.logout(req.body.email, refreshToken);
+         await AccountService.logout(refreshToken);
          res.status(200).json({
             message: "Токен занесен в черный список",
          });
