@@ -4,7 +4,7 @@ import { AccountOutputType } from "../models/types/account-type";
 import { ProfileInputType } from "../models/types/profile-type";
 import { ProfileService } from "../services/profile-service";
 import { Request, Response, NextFunction } from "express";
-import fs from "fs";
+import { deleteFile } from "../utils/delete-file";
 import { SubscriptionsListModel } from "../models/schemas/profile-db-ref-schemas";
 
 export class ProfileController {
@@ -30,15 +30,8 @@ export class ProfileController {
             decodedAccessToken
          );
 
-         if (filePath) {
-            fs.unlink(filePath, (err) => {
-               if (err) {
-                  console.error("Ошибка при удалении файла:", err);
-               } else {
-                  console.log("Файл удалён, как и договаривались!");
-               }
-            });
-         }
+         filePath ? deleteFile(filePath) : null;
+
          res.status(200).json(updatedProfile);
       } catch (error) {
          next(error);
