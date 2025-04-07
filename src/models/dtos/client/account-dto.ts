@@ -3,14 +3,14 @@ import { AccountDbType } from "../../types/account-type";
 import { RoleType } from "../../types/role-type";
 
 export class AccountDto {
-   _id;
+   accountId;
    profileId;
    email;
    isActivated;
    roles: RoleType[];
 
    constructor(model: AccountDbType) {
-      this._id = model._id;
+      this.accountId = model._id;
       this.profileId = model.profileId;
       this.email = model.email;
       this.isActivated = model.isActivated;

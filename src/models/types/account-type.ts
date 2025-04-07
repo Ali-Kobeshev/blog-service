@@ -18,7 +18,7 @@ export type AccountInputType = {
 };
 
 export type AccountOutputType = {
-   _id: Types.ObjectId;
+   accountId: Types.ObjectId;
    profileId: Types.ObjectId;
    email: string;
    isActivated: boolean;
