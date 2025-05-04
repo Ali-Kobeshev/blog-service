@@ -8,6 +8,7 @@ import { ApiError } from "../exceptions/api-errors";
 import { accountProfileTransaction } from "../mongo-transactions/account-profile";
 import { RoleNames } from "../constants/enums/role-names";
 import { SessionService } from "./session-service";
+import { ProfileModel } from "../models/schemas/profile-schema";
 
 const activateLinkCodes: any = {};
 
@@ -92,7 +93,14 @@ export class AccountService {
 
       await SessionService.createNewSession(tokens.refreshToken, account);
 
-      return { account: accountDto, ...tokens };
+      const profile = await ProfileModel.findOne({
+         _id: account.profileId,
+      });
+      if (!profile) {
+         throw ApiError.NotFound("Профиль не найден");
+      }
+
+      return { profile, account: accountDto, ...tokens };
    }
    static async logout(token: string) {
       const isValidated = TokenService.validateRefreshToken(token);

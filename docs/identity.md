@@ -1,6 +1,6 @@
 # Также можно в качестве дополнительной документалки использовать файлы src/models/
 
-````js
+```js
 //input data
 //registration
 POST [serviceAPI]/identity/registration = {
@@ -174,6 +174,4 @@ GET [serviceAPI]/identity/refresh = {
 //         message: string
 //     }
 // }
-\```
-
-````
+```

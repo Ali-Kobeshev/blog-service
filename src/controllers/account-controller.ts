@@ -8,7 +8,8 @@ export class AccountController {
          const accountData = await AccountService.registration(email, password);
          res.cookie("refreshToken", accountData.refreshToken, {
             httpOnly: true,
-            secure: true,
+            sameSite: "lax", // если фронт и бэк на разных портам
+            secure: false,
             maxAge: 30 * 24 * 60 * 60 * 1000,
          });
          res.status(200).json({
@@ -63,11 +64,13 @@ export class AccountController {
          );
          res.cookie("refreshToken", accountData.refreshToken, {
             httpOnly: true,
-            secure: true,
+            sameSite: "lax", // если фронт и бэк на разных портам
+            secure: false,
             maxAge: 30 * 24 * 60 * 60 * 1000,
          });
          res.status(200).json({
             accountData: accountData.account,
+            profile: accountData.profile,
             accessToken: accountData.accessToken,
          });
       } catch (error) {
@@ -93,7 +96,8 @@ export class AccountController {
          const result = await AccountService.refresh(refreshToken);
          res.cookie("refreshToken", result.tokens.refreshToken, {
             httpOnly: true,
-            secure: true,
+            sameSite: "lax", // если фронт и бэк на разных портам
+            secure: false,
             maxAge: 30 * 24 * 60 * 60 * 1000,
          });
          res.status(200).json({
