@@ -29,7 +29,9 @@ export class AccountController {
       next: NextFunction
    ) {
       try {
-         const result = await AccountService.sendActivationMail(req.body.email);
+         const result = await AccountService.sendActivationMail(
+            req.body.accountData.email
+         );
          res.status(200).json(result);
       } catch (error) {
          console.error(error);
@@ -44,7 +46,7 @@ export class AccountController {
          );
          res.cookie("refreshToken", activatedAccount.refreshToken, {
             httpOnly: true,
-            secure: true,
+            secure: false,
             maxAge: 30 * 24 * 60 * 60 * 1000,
          });
          res.status(200).json({

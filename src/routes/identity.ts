@@ -4,6 +4,7 @@ import { param } from "express-validator";
 import { loginDataValidator } from "../validators/identity-router-validators";
 import { validateEmail } from "../validators/base-validators/email-validadator";
 import { validationResultMiddleware } from "../middlewares/validation-result-middleware";
+import { authMiddleware } from "../middlewares/auth-middlerware";
 
 const router = Router();
 
@@ -13,12 +14,19 @@ router.post(
    validationResultMiddleware,
    AccountController.registration
 );
+
 router.post(
    "/activate/send-link",
-   validateEmail("body"),
-   validationResultMiddleware,
+   authMiddleware,
    AccountController.sendActivateLink
 );
+
+// router.post(
+//    "/activate/send-link",
+//    validateEmail("body"),
+//    validationResultMiddleware,
+//    AccountController.sendActivateLink
+// );
 router.get(
    "/activate/:email/:code",
    param("code")
